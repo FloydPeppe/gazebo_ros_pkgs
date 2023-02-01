@@ -84,41 +84,59 @@ class GazeboRosForce : public ModelPlugin
 
   /// \brief call back when a Wrench message is published
   /// \param[in] _msg The Incoming ROS message representing the new force to exert.
-  private: void UpdateObjectForce(const geometry_msgs::Wrench::ConstPtr& _msg);
+  private: void UpdateObjectForceLeft(const geometry_msgs::Wrench::ConstPtr& _msg);
+  private: void UpdateObjectForceRight(const geometry_msgs::Wrench::ConstPtr& _msg);
 
   /// \brief The custom callback queue thread function.
-  private: void QueueThread();
+  private: void QueueThreadLeft();
+  private: void QueueThreadRight();
 
   /// \brief A pointer to the gazebo world.
   private: physics::WorldPtr world_;
 
   /// \brief A pointer to the Link, where force is applied
-  private: physics::LinkPtr link_;
+  private: physics::LinkPtr link_left_;
+  private: physics::LinkPtr link_right_;
 
   /// \brief A pointer to the ROS node.  A node will be instantiated if it does not exist.
-  private: ros::NodeHandle* rosnode_;
-  private: ros::Subscriber sub_;
+  private: ros::NodeHandle* rosnode_left;
+  private: ros::NodeHandle* rosnode_right;
 
-  /// \brief A mutex to lock access to fields that are used in ROS message callbacks
+  private: ros::Subscriber sub_left;
+  private: ros::Subscriber sub_right;
+
+    /// \brief A mutex to lock access to fields that are used in ROS message callbacks
   private: boost::mutex lock_;
 
   /// \brief ROS Wrench topic name inputs
-  private: std::string topic_name_;
+  private: std::string topic_name_left_;
+  private: std::string topic_name_right_;
+
   /// \brief The Link this plugin is attached to, and will exert forces on.
-  private: std::string link_name_;
+  private: std::string link_name_left_;
+  private: std::string link_name_right_;
 
   /// \brief for setting ROS name space
   private: std::string robot_namespace_;
 
   // Custom Callback Queue
-  private: ros::CallbackQueue queue_;
+  private: ros::CallbackQueue queue_left;
+  private: ros::CallbackQueue queue_right;
+
   /// \brief Thead object for the running callback Thread.
-  private: boost::thread callback_queue_thread_;
+  private: boost::thread callback_queue_thread_left;
+  private: boost::thread callback_queue_thread_right;
+
   /// \brief Container for the wrench force that this plugin exerts on the body.
-  private: geometry_msgs::Wrench wrench_msg_;
+  private: geometry_msgs::Wrench wrench_msg_left;
+  private: geometry_msgs::Wrench wrench_msg_right;
 
   // Pointer to the update event connection
   private: event::ConnectionPtr update_connection_;
+
+  double update_rate_;
+  double update_period_;
+  common::Time last_update_time_;
 };
 /** \} */
 /// @}
