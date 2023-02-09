@@ -40,8 +40,7 @@
 #include <gazebo/common/Events.hh>
 
 
-namespace gazebo
-{
+namespace gazebo {
 /// @addtogroup gazebo_dynamic_plugins Gazebo ROS Dynamic Plugins
 /// @{
 /** \defgroup GazeboRosForce Plugin XML Reference and Example
@@ -54,8 +53,8 @@ namespace gazebo
   \verbatim
       <gazebo>
         <plugin filename="libgazebo_ros_force.so" name="gazebo_ros_force">
-          <bodyName>box_body</bodyName>
-          <topicName>box_force</topicName>
+          <bodyName>link_1, link_2</bodyName>
+          <topicName>force_1, force_2</topicName>
         </plugin>
       </gazebo>
   \endverbatim
@@ -68,76 +67,68 @@ namespace gazebo
 
 */
 
-class GazeboRosForce : public ModelPlugin
-{
-  /// \brief Constructor
-  public: GazeboRosForce();
+    class GazeboRosForce : public ModelPlugin {
 
-  /// \brief Destructor
-  public: virtual ~GazeboRosForce();
+    public:
+        /// \brief Constructor
+        GazeboRosForce();
 
-  // Documentation inherited
-  protected: void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
+        /// \brief Destructor
+        virtual ~GazeboRosForce();
 
-  // Documentation inherited
-  protected: virtual void UpdateChild();
+    protected:
+        // Documentation inherited
+        void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf);
 
-  /// \brief call back when a Wrench message is published
-  /// \param[in] _msg The Incoming ROS message representing the new force to exert.
-  private: void UpdateObjectForceLeft(const geometry_msgs::Wrench::ConstPtr& _msg);
-  private: void UpdateObjectForceRight(const geometry_msgs::Wrench::ConstPtr& _msg);
+        // Documentation inherited
+        virtual void UpdateChild();
 
-  /// \brief The custom callback queue thread function.
-  private: void QueueThreadLeft();
-  private: void QueueThreadRight();
+    private:
+        /// \brief call back when a Wrench message is published
+        /// \param[in] _msg The Incoming ROS message representing the new force to exert.
+        std::vector<std::function<void (const geometry_msgs::Wrench::ConstPtr)>> UpdateObjectForces;
 
-  /// \brief A pointer to the gazebo world.
-  private: physics::WorldPtr world_;
+        /// \brief The custom callback queue thread function.
+        void QueueThread();
 
-  /// \brief A pointer to the Link, where force is applied
-  private: physics::LinkPtr link_left_;
-  private: physics::LinkPtr link_right_;
+        /// \brief A pointer to the gazebo world.
+        physics::WorldPtr world_;
 
-  /// \brief A pointer to the ROS node.  A node will be instantiated if it does not exist.
-  private: ros::NodeHandle* rosnode_left;
-  private: ros::NodeHandle* rosnode_right;
+        /// \brief A pointer to the Link, where force is applied
+        std::vector<physics::LinkPtr> links_;
 
-  private: ros::Subscriber sub_left;
-  private: ros::Subscriber sub_right;
+        /// \brief A pointer to the ROS node.  A node will be instantiated if it does not exist.
+        ros::NodeHandle *rosnode_;
+        std::vector<ros::Subscriber> subs_;
 
-    /// \brief A mutex to lock access to fields that are used in ROS message callbacks
-  private: boost::mutex lock_;
+        /// \brief A mutex to lock access to fields that are used in ROS message callbacks
+        boost::mutex lock_;
 
-  /// \brief ROS Wrench topic name inputs
-  private: std::string topic_name_left_;
-  private: std::string topic_name_right_;
+        /// \brief ROS Wrench topic name inputs
+        std::vector<std::string> topic_names_;
 
-  /// \brief The Link this plugin is attached to, and will exert forces on.
-  private: std::string link_name_left_;
-  private: std::string link_name_right_;
+        /// \brief The Link this plugin is attached to, and will exert forces on.
+        std::vector<std::string> link_names_;
 
-  /// \brief for setting ROS name space
-  private: std::string robot_namespace_;
+        /// \brief for setting ROS name space
+        std::string robot_namespace_;
 
-  // Custom Callback Queue
-  private: ros::CallbackQueue queue_left;
-  private: ros::CallbackQueue queue_right;
+        // Custom Callback Queue
+        ros::CallbackQueue queue_;
 
-  /// \brief Thead object for the running callback Thread.
-  private: boost::thread callback_queue_thread_left;
-  private: boost::thread callback_queue_thread_right;
+        /// \brief Thead object for the running callback Thread.
+        boost::thread callback_queue_thread_;
 
-  /// \brief Container for the wrench force that this plugin exerts on the body.
-  private: geometry_msgs::Wrench wrench_msg_left;
-  private: geometry_msgs::Wrench wrench_msg_right;
+        /// \brief Container for the wrench force that this plugin exerts on the body.
+        std::vector<geometry_msgs::Wrench> wrench_msgs_;
 
-  // Pointer to the update event connection
-  private: event::ConnectionPtr update_connection_;
+        // Pointer to the update event connection
+        event::ConnectionPtr update_connection_;
 
-  double update_rate_;
-  double update_period_;
-  common::Time last_update_time_;
-};
+        double update_rate_;
+        double update_period_;
+        common::Time last_update_time_;
+    };
 /** \} */
 /// @}
 }
